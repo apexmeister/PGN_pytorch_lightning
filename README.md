@@ -1,2 +1,2 @@
 # PGN_pytorch_lightning
-A pytorch lightning version of Pointer Generator Networks 
+A pytorch_lightning version of Pointer Generator Networks 
