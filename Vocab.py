@@ -182,8 +182,8 @@ def makeVocabdict(data_dir, vocab_dir, vocab_size):
 
 
 if __name__ == '__main__':
-    data_path = "/home/disk2/lyj2019/workspace/my_paper/dataset/SAMsum/finished_csv_datas/train.csv"
-    vocab_path = "/home/disk2/lyj2019/workspace/my_paper/dataset/SAMsum/finished_csv_datas/vocab"
+    data_path = "train.csv"
+    vocab_path = "vocab"
     makeVocabdict(data_path, vocab_path, 60000)
     vocab = Vocab(vocab_path, 50000)
 
