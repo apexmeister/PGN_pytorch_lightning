@@ -1,11 +1,9 @@
 # Pointer Generator Networks with pytorch_lightning 
-------
 This is a ***pytorch lightning*** version of **<u>Pointer Generator Networks</u>** 
-
+------
 heavily base on the paper **<a herf=https://arxiv.org/pdf/1704.04368.pdf>Get To The Point: Summarization with Pointer-Generator Networks</a>**
 
 and the transformer version of PGN from **https://github.com/hquzhuguofeng/New-Pointer-Generator-Networks-for-Summarization-Chinese**
-------
 ## Step 1: Prepare data
 
 Here,  we create data file in ```.csv``` : ```train.csv/valid.csv/test.csv```
@@ -23,13 +21,13 @@ build vocab file by ```vocab.py```
 ```
 
 and launch ```python vocab.py```
-------
+
 ## Step 2: Training
 
 filling in all the in ```main.py```
 
 and launch training by ```python main.py```
-------
+
 ## Step 3: Decoding
 
 ```python main.py -load_model ./path/to/the/checkpoint.chkpt -mode test```
