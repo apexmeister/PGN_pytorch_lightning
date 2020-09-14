@@ -62,17 +62,17 @@ def main():
 
     # ===============path config=================
     parser.add_argument("-train_path", type=str,
-                        default="/home/disk2/lyj2019/workspace/my_paper/dataset/SAMsum/finished_csv_datas/train.csv")
+                        default="train.csv")
     parser.add_argument("-valid_path", type=str,
-                        default="/home/disk2/lyj2019/workspace/my_paper/dataset/SAMsum/finished_csv_datas/valid.csv")
+                        default="valid.csv")
     parser.add_argument("-test_path", type=str,
-                        default="/home/disk2/lyj2019/workspace/my_paper/dataset/SAMsum/finished_csv_datas/test.csv")
+                        default="test.csv")
     parser.add_argument("-vocab_path", type=str,
-                        default="/home/disk2/lyj2019/workspace/my_paper/dataset/SAMsum/finished_csv_datas/vocab")
+                        default="vocab")
     parser.add_argument("-save_mode", type=str, default="best")
     parser.add_argument("-load_model", type=str, default=None)
     parser.add_argument("-result_dir", type=str,
-                        default="/home/disk2/lyj2019/workspace/my_paper/PGN_TR_PLver/result/pred_SAMsum.txt")
+                        default="/result/pred.txt")
 
     # ===============model config=================
     parser.add_argument("-n_heads", type=int, default=4)
@@ -108,6 +108,7 @@ def main():
     parser.add_argument("-epoch", type=int, default=10)
     parser.add_argument("-max_epoch", type=int, default=100)
     parser.add_argument("-n_warmup_steps", type=int, default=2000)
+    parser.add_argument("-gpus", type=int, default=1)
 
     opt = parser.parse_args()
     print(opt)
@@ -116,9 +117,9 @@ def main():
     model = PointerGeneratorNetworks(opt).cuda()
     DataModule = DataLoaderModule(opt)
     if opt.load_model:
-        trainer = pl.Trainer(resume_from_checkpoint=opt.load_model, gpus=2, max_epochs=opt.max_epoch)
+        trainer = pl.Trainer(resume_from_checkpoint=opt.load_model, gpus=opt.gpus, max_epochs=opt.max_epoch)
     else:
-        trainer = pl.Trainer(gpus=2, max_epochs=opt.epoch)
+        trainer = pl.Trainer(gpus=opt.gpus, max_epochs=opt.epoch)
 
     if opt.mode == "train":
         trainer.fit(model=model, datamodule=DataModule)
