@@ -106,9 +106,9 @@ def from_sample_covert_example(vocab, article, title, max_article_len, max_title
         article = article[:max_article_len]
 
     encoder_input = [vocab.word2id(word) for word in article]
-    # 加上 start 和 end
+    # add <bos> and <eos>
     title = [START_DECODING] + title + [STOP_DECODING]
-    # 截断，限制摘要的长度
+    # trunc when reach max_len
     title = title[:max_title_len+1]
     title_idx = [vocab.word2id(word) for word in title]
     decoder_input = title_idx[:-1]
@@ -258,19 +258,19 @@ def from_test_batch_get_model_input(batch, hidden_dim, use_pointer=True, use_cov
     max_oov_len = all_oov_len.max().item()
 
     oov_zeros = None
-    if use_pointer:                # 当时用指针网络时，decoder_target应该要带上oovs
+    if use_pointer:                # when using pointer, decoder_target should be oov version
         all_decoder_target = all_decoder_target_with_oov
-        if max_oov_len > 0:                # 使用指针时，并且在这个batch中存在oov的词汇，oov_zeros才不是None
+        if max_oov_len > 0:                # when using pointer and the oov exist, the oov_zeros are not None
             oov_zeros = torch.zeros((batch_size, max_oov_len),dtype= torch.float32)
-    else:                                  # 当不使用指针时，带有oov的all_encoder_input_with_oov也不需要了
+    else:                                  # when not using pointer, it is not necessary to build all_decoder_target_with_oov and oov_zeros
         all_encoder_input_with_oov = None
 
 
     init_coverage = None
     if use_coverage:
-        init_coverage = torch.zeros(all_encoder_input.size(),dtype=torch.float32)          # 注意数据格式是float
+        init_coverage = torch.zeros(all_encoder_input.size(),dtype=torch.float32)          # float32
 
-    init_context_vec = torch.zeros((batch_size, 2 * hidden_dim),dtype=torch.float32)   # 注意数据格式是float
+    init_context_vec = torch.zeros((batch_size, 2 * hidden_dim),dtype=torch.float32)   # float32
 
     model_input = [all_encoder_input,all_encoder_mask,all_encoder_input_with_oov,oov_zeros,init_context_vec,
                    init_coverage,all_decoder_input,all_decoder_mask,all_decoder_target]
@@ -297,19 +297,19 @@ def from_batch_get_model_input(batch, hidden_dim, use_pointer=True, use_coverage
     max_oov_len = all_oov_len.max().item()
 
     oov_zeros = None
-    if use_pointer:                # 当时用指针网络时，decoder_target应该要带上oovs
+    if use_pointer:                # when using pointer, decoder_target should be oov version
         all_decoder_target = all_decoder_target_with_oov
-        if max_oov_len > 0:                # 使用指针时，并且在这个batch中存在oov的词汇，oov_zeros才不是None
+        if max_oov_len > 0:                # when using pointer and the oov exist, the oov_zeros are not None
             oov_zeros = torch.zeros((batch_size, max_oov_len),dtype= torch.float32)
-    else:                                  # 当不使用指针时，带有oov的all_encoder_input_with_oov也不需要了
+    else:                                  # when not using pointer, it is not necessary to build all_decoder_target_with_oov and oov_zeros
         all_encoder_input_with_oov = None
 
 
     init_coverage = None
     if use_coverage:
-        init_coverage = torch.zeros(all_encoder_input.size(),dtype=torch.float32)          # 注意数据格式是float
+        init_coverage = torch.zeros(all_encoder_input.size(),dtype=torch.float32)          # float32
 
-    init_context_vec = torch.zeros((batch_size, 2 * hidden_dim),dtype=torch.float32)   # 注意数据格式是float
+    init_context_vec = torch.zeros((batch_size, 2 * hidden_dim),dtype=torch.float32)   # float32
 
     model_input = [all_encoder_input,all_encoder_mask,all_encoder_input_with_oov,oov_zeros,init_context_vec,
                    init_coverage,all_decoder_input,all_decoder_mask,all_decoder_target]
@@ -317,8 +317,8 @@ def from_batch_get_model_input(batch, hidden_dim, use_pointer=True, use_coverage
     return model_input
 
 if __name__ == "__main__":
-    data_path = "/home/disk2/lyj2019/workspace/my_paper/dataset/cnn-dailymail-master/finished_csv_files/train.csv"
-    vocab_path = "/home/disk2/lyj2019/workspace/my_paper/dataset/cnn-dailymail-master/finished_csv_files/vocab"
+    data_path = "train.csv"
+    vocab_path = "vocab"
     max_article_len = 200
     max_title_len = 200
     batch_size = 32
