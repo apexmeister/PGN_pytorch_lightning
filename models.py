@@ -244,17 +244,15 @@ class Encoder(nn.Module):
 
         self.pad_idx = pad_idx
 
-    # x.shape (batch,seq_len)  #词的索引
-    # mask.shape (batch,seq_len)   每个样本的真实长度
     def forward(self, x, mask):
-        embedded = self.dropout(self.embedding(x))  # 这里的dropout可以不用加了
+        embedded = self.dropout(self.embedding(x))
 
         bert_output = self.bertLayer(hidden_states=embedded, attention_mask=mask)
         bool_mask = (mask == 0)
-        # 在mask的位置用value来填充，
+
         bert_output_masked = bert_output.masked_fill(mask=bool_mask.unsqueeze(dim=2), value=0)
 
-        seq_lens = mask.sum(dim=-1)  # 统计每个句子的长度，【batch�?
+        seq_lens = mask.sum(dim=-1)
         packed = pack_padded_sequence(input=bert_output_masked, lengths=seq_lens, batch_first=True,
                                       enforce_sorted=False)
         output_packed, (h, c) = self.lstm(packed)
@@ -321,7 +319,7 @@ class Attention(nn.Module):
 
         decoder_features = self.dropout(self.w_s(s).unsqueeze(1))  # (batch,1,hidden*2)
 
-        # broadcast 广播运算
+        # broadcast
         attention_feature = encoder_features + decoder_features  # (batch,seq_len,hidden*2)
 
         if self.use_coverage:
@@ -444,7 +442,7 @@ class Decoder(nn.Module):
 
         # (batch,hidden_dim*2)  encoder_output weight sum about attention_score
         # current_context_vec = torch.bmm(attention_score.unsqueeze(1),encoder_output).squeeze()
-        # 尝试一下高级写法，结果和上面一行一致
+        # same as above
         current_context_vec = torch.einsum("ab,abc->ac", attention_score, encoder_output)
 
         # (batch,1)
@@ -622,10 +620,6 @@ class PointerGeneratorNetworks(pl.LightningModule):
         while step < self.max_title_len and len(result) < 4:
             # print("step: ",step)
 
-            # 当模型效果不太好时，可能会出现这种情况。有两个原因�?
-            # 1、模型生成的都是<unk>�?pad>人工过滤掉了
-            # 2、标题最小长度小于规定长度。同样过滤掉�?
-            # print("     BEAMS:     ",beams)
             assert len(beams) != 0
 
             # print(len(beams))
@@ -658,8 +652,6 @@ class PointerGeneratorNetworks(pl.LightningModule):
             else:
                 coverage = None
 
-            # 通常来说�?在step >= 1的条件下，这里的len(beams) == beam_size 的，
-            # 但是也不排除模型效果不好的情况len(beams) < beam_size
             current_beam_size = len(beams)
             if current_beam_size != last_beam_size:
                 last_beam_size = current_beam_size
@@ -735,8 +727,8 @@ class PointerGeneratorNetworks(pl.LightningModule):
                     # print(len(beam.tokens))
                     if len(beam.tokens) > self.min_title_len:
                         result.append(beam)
-                    else:  # 如果以stop_token_idx 结尾，并且不够长，就丢弃掉，假如全部被丢掉了,0 == len(beams)
-                        pass  # 把beam_size适当调大，min_decoder_len适当调小，如果还不行，模型估计废了。。。。�?                else:
+                    else:
+                        pass
                 else:
                     beams.append(beam)
                 if beam_size == len(beams) or len(result) == beam_size:
