@@ -6,15 +6,15 @@ SENTENCE_START = '<s>'
 SENTENCE_END = '</s>'
 
 PAD_TOKEN = '<pad>'
-UNKNOWN_TOKEN = '<unk>'  # OOV符号
-START_DECODING = '<bos>'  # 解码开始符号
-STOP_DECODING = '<eos>'  # 解码结束符号
+UNKNOWN_TOKEN = '<unk>'  # OOV token
+START_DECODING = '<bos>'  # decoding start
+STOP_DECODING = '<eos>'  # decoding end
 
 
 class Vocab(object):
     def __init__(self, vocab_file=None, vocab_size=50000):
         '''
-            根据构建好的vocab文件构造Vocab对象
+            #build Vocab class with vocab file
             vocab_file content(word count):
                 to 5751035
                 a 5100555
@@ -22,35 +22,35 @@ class Vocab(object):
         '''
         self._word_to_id = {}
         self._id_to_word = {}
-        self._count = 0  # 记录词表里的总词数
+        self._count = 0  # total words numbers in vocab class
 
-        # <pad>, <unk>, <bos> and <eos> 取得词表的对应ID：0，1，2，3
+        # <pad>, <unk>, <bos> and <eos> ids：0，1，2，3
         for w in [PAD_TOKEN, UNKNOWN_TOKEN, START_DECODING, STOP_DECODING]:
             self._word_to_id[w] = self._count
             self._id_to_word[self._count] = w
             self._count += 1
 
 
-        # 读取词表文件，并向Vocab对象中添加词汇直到上限词
+        # load vocab file
         with open(vocab_file, 'r') as vocab_f:
             for line in vocab_f:
                 parts = line.split("\t")
 
-                # 检测词表每行结构是否正确
+                # checking
                 if len(parts) != 2:
                     print('Warning: incorrectly formatted line in vocabulary file: {}'.format(line))
                     continue
 
                 w = parts[0]
-                # 检测词表里是否有特殊符号
+                # checking
                 if w in [SENTENCE_START, SENTENCE_END, UNKNOWN_TOKEN, PAD_TOKEN, START_DECODING, STOP_DECODING]:
                     raise Exception(
                         '<s>, </s>, [UNK], [PAD], [START] and [STOP] shouldn\'t be in the vocab file, but %s is' % w)
-                # 检测词表是否重复记录
+                # checking
                 if w in self._word_to_id:
                     raise Exception('Duplicated word in vocabulary file: %s' % w)
 
-                # 检测没有问题就可以写入词表，直到写满词表
+                # writing in
                 self._word_to_id[w] = self._count
                 self._id_to_word[self._count] = w
                 self._count += 1
@@ -70,43 +70,43 @@ class Vocab(object):
             print("   ", idx, self._id_to_word[idx])
 
     def word2id(self, word):
-        '''获取单个词语的id'''
+        '''get a word's id'''
         if word not in self._word_to_id:
             return self._word_to_id[UNKNOWN_TOKEN]
         return self._word_to_id[word]
 
     def id2word(self, word_id):
-        '''根据词语id解析对应的词语'''
+        '''decoder word with word id'''
         if word_id not in self._id_to_word:
             raise ValueError('Id not found in vocab: %d' % word_id)
         return self._id_to_word[word_id]
 
     def get_vocab_size(self):
-        '''获取加上特殊符号后，词汇表大小'''
+        '''get vocab size'''
         return self._count
 
 
 def article2ids(article_words, vocab):
     '''
-    接收：
-        list类别的article词汇列标；
-        Vocab类别的实例对象；
+    args：
+        article(list[str])；
+        class Vocab；
 
-    返回两个列表:
-        ids：list类别的对应词汇的id；
-        oovs：list类别的用于记录oov的列标。
+    return:
+        ids：idx(list[int])；
+        oovs：oovs(list[int])。
     '''
     article_ids = []
     article_oovs = []
     unk_id = vocab.word2id(UNKNOWN_TOKEN)
     for w in article_words:
         i = vocab.word2id(w)
-        if i == unk_id:  # 判断该词汇是否为oov词汇
-            if w not in article_oovs:  # 添加到oov词汇列标里
+        if i == unk_id:  # i is oov?
+            if w not in article_oovs:  # add i into oovs
                 article_oovs.append(w)
-            oov_num = article_oovs.index(w)  # 令该文章中第1个oov的索引为0；第二次oov的索引为1
+            oov_num = article_oovs.index(w)  # give the first oov in article 0 id, and the second 1
             article_ids.append(
-                vocab.get_vocab_size() + oov_num)  # 这么做的目的是拓展原有的词汇表，如上述第一个oov为词表id为50000的词，第二个oov则为50001的词
+                vocab.get_vocab_size() + oov_num)  # to extend standard vocabulary size from 50000 to 50001 with oov
         else:
             article_ids.append(i)
 
@@ -114,10 +114,10 @@ def article2ids(article_words, vocab):
 
 def abstract2ids(abstract_words, vocab, article_oovs):
     '''
-    :param abstract_words: list类型的摘要词汇列表
-    :param vocab: 实例化Vocab类别的对象
-    :param article_oovs: 该摘要文本对应文章所记录的oov列标
-    :return: 对应摘要词汇的id列表
+    :param abstract_words: list[str]
+    :param vocab: class Vocab
+    :param article_oovs: list[int]
+    :return: abstract_ids: list[int]
     '''
 
     abstract_ids = []
@@ -156,10 +156,10 @@ def makeVocabdict(data_dir, vocab_dir, vocab_size):
             tit_tokens = tit.strip().split(' ')
 
             # tit_tokens = [t for t in tit_tokens if
-            #               t not in [SENTENCE_START, SENTENCE_END]]  # 从词典中删除这些符号
+            #               t not in [SENTENCE_START, SENTENCE_END]]  # remove special characters
             tokens = art_tokens + tit_tokens
-            tokens = [t.strip() for t in tokens]  # 去掉句子开头结尾的空字符
-            tokens = [t for t in tokens if t != ""]  # 删除空行
+            tokens = [t.strip() for t in tokens]
+            tokens = [t for t in tokens if t != ""]
 
             for token in tokens:
                 if token in vocab_counter:
@@ -179,30 +179,6 @@ def makeVocabdict(data_dir, vocab_dir, vocab_size):
                 writer.write(word + '\t' + str(count) + '\n')
 
     print("Finished writing vocab file")
-    # for art, tit in tqdm(zip(articles, titles)):
-    #     try:
-    #         art_tokens = art.split(' ')
-    #         tit_tokens = tit.split(' ')
-    #
-    #         tit_tokens = [t for t in tit_tokens if
-    #                       t not in [SENTENCE_START, SENTENCE_END]]  # 从词典中删除这些符号
-    #         tokens = art_tokens + tit_tokens
-    #         tokens = [t.strip() for t in tokens]  # 去掉句子开头结尾的空字符
-    #         tokens = [t for t in tokens if t != ""]  # 删除空行
-    #
-    #         vocab_counter.update(tokens)
-    #     except:
-    #         print("something wrong happen with \n aritlce: {}\n title: {}\n".format(art, tit))
-    #
-    # print("all datas in {} has been loaded, now build the vocab file....".format(data_dir))
-    # with open(os.path.join(vocab_dir), 'w', encoding='utf-8') as writer:
-    #     for word, count in vocab_counter.most_common(vocab_size):
-    #         if word in [SENTENCE_START, SENTENCE_END, UNKNOWN_TOKEN, PAD_TOKEN, START_DECODING, STOP_DECODING]:
-    #             continue
-    #         else:
-    #             writer.write(word + ' ' + str(count) + '\n')
-    #
-    # print("Finished writing vocab file")
 
 
 if __name__ == '__main__':
